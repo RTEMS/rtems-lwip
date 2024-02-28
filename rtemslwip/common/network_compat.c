@@ -58,6 +58,12 @@ uint16_t htons(uint16_t x)
   return lwip_htons(x);
 }
 
+#undef gethostbyname
+struct hostent *gethostbyname(const char *name)
+{
+  return lwip_gethostbyname(name);
+}
+
 int
 getnameinfo(const struct sockaddr *sa, socklen_t salen, char *node,
     size_t nodelen, char *service, size_t servicelen, int flags)
