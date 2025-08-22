@@ -138,10 +138,17 @@ s32_t is_tx_space_available(xemacpsif_s *emac)
 	XEmacPs_BdRing *txring;
 	s32_t freecnt = 0;
 
+#ifdef __rtems__
+	SYS_ARCH_DECL_PROTECT(lev);
+	SYS_ARCH_PROTECT(lev);
+#endif /* __rtems__ */
 	txring = &(XEmacPs_GetTxRing(&emac->emacps));
 
 	/* tx space is available as long as there are valid BD's */
 	freecnt = XEmacPs_BdRingGetFreeCnt(txring);
+#ifdef __rtems__
+	SYS_ARCH_UNPROTECT(lev);
+#endif /* __rtems__ */
 	return freecnt;
 }
 
@@ -250,10 +257,17 @@ void process_sent_bds(xemacpsif_s *xemacpsif, XEmacPs_BdRing *txring)
 #endif
 
 	while (1) {
+#ifdef __rtems__
+		SYS_ARCH_DECL_PROTECT(lev);
+		SYS_ARCH_PROTECT(lev);
+#endif /* __rtems__ */
 		/* obtain processed BD's */
 		n_bds = XEmacPs_BdRingFromHwTx(txring,
 								XLWIP_CONFIG_N_TX_DESC, &txbdset);
 		if (n_bds == 0)  {
+#ifdef __rtems__
+			SYS_ARCH_UNPROTECT(lev);
+#endif /* __rtems__ */
 			return;
 		}
 		/* free the processed BD's */
@@ -270,10 +284,6 @@ void process_sent_bds(xemacpsif_s *xemacpsif, XEmacPs_BdRing *txring)
 				*temp = 0x80000000;
 			}
 			dsb();
-#ifdef __rtems__
-			SYS_ARCH_DECL_PROTECT(lev);
-			SYS_ARCH_PROTECT(lev);
-#endif /* __rtems__ */
 			p = (struct pbuf *)tx_pbufs_storage[index + bdindex];
 			if (p != NULL) {
 				pbuf_free(p);
@@ -282,15 +292,15 @@ void process_sent_bds(xemacpsif_s *xemacpsif, XEmacPs_BdRing *txring)
 			notifyinfo[tx_task_notifier_index + bdindex] = 0;
 #endif
 			tx_pbufs_storage[index + bdindex] = 0;
-#ifdef __rtems__
-			SYS_ARCH_UNPROTECT(lev);
-#endif /* __rtems__ */
 			curbdpntr = XEmacPs_BdRingNext(txring, curbdpntr);
 			n_pbufs_freed--;
 			dsb();
 		}
 
 		status = XEmacPs_BdRingFree(txring, n_bds, txbdset);
+#ifdef __rtems__
+		SYS_ARCH_UNPROTECT(lev);
+#endif /* __rtems__ */
 		if (status != XST_SUCCESS) {
 			LWIP_DEBUGF(NETIF_DEBUG, ("Failure while freeing in Tx Done ISR\r\n"));
 		}
@@ -350,19 +360,22 @@ XStatus emacps_sgsend(xemacpsif_s *xemacpsif, struct pbuf *p)
 	for (q = p, n_pbufs = 0; q != NULL; q = q->next)
 		n_pbufs++;
 
+#ifdef __rtems__
+	SYS_ARCH_DECL_PROTECT(lev);
+	SYS_ARCH_PROTECT(lev);
+#endif /* __rtems__ */
 	/* obtain as many BD's */
 	status = XEmacPs_BdRingAlloc(txring, n_pbufs, &txbdset);
 	if (status != XST_SUCCESS) {
+#ifdef __rtems__
+		SYS_ARCH_UNPROTECT(lev);
+#endif /* __rtems__ */
 		LWIP_DEBUGF(NETIF_DEBUG, ("sgsend: Error allocating TxBD\r\n"));
 		return XST_FAILURE;
 	}
 
 	for(q = p, txbd = txbdset; q != NULL; q = q->next) {
 		bdindex = XEMACPS_BD_TO_INDEX(txring, txbd);
-#ifdef __rtems__
-		SYS_ARCH_DECL_PROTECT(lev);
-		SYS_ARCH_PROTECT(lev);
-#endif /* __rtems__ */
 		if (tx_pbufs_storage[index + bdindex] != 0) {
 			LWIP_DEBUGF(NETIF_DEBUG, ("PBUFS not available\r\n"));
 #ifdef __rtems__
@@ -393,9 +406,6 @@ XStatus emacps_sgsend(xemacpsif_s *xemacpsif, struct pbuf *p)
 		tx_pbufs_storage[index + bdindex] = (UINTPTR)q;
 
 		pbuf_ref(q);
-#ifdef __rtems__
-		SYS_ARCH_UNPROTECT(lev);
-#endif /* __rtems__ */
 		last_txbd = txbd;
 		XEmacPs_BdClearLast(txbd);
 		txbd = XEmacPs_BdRingNext(txring, txbd);
@@ -423,6 +433,9 @@ XStatus emacps_sgsend(xemacpsif_s *xemacpsif, struct pbuf *p)
 	dsb();
 
 	status = XEmacPs_BdRingToHw(txring, n_pbufs, txbdset);
+#ifdef __rtems__
+	SYS_ARCH_UNPROTECT(lev);
+#endif /* __rtems__ */
 	if (status != XST_SUCCESS) {
 		LWIP_DEBUGF(NETIF_DEBUG, ("sgsend: Error submitting TxBD\r\n"));
 		return XST_FAILURE;
@@ -447,6 +460,10 @@ void setup_rx_bds(xemacpsif_s *xemacpsif, XEmacPs_BdRing *rxring)
 
 	index = get_base_index_rxpbufsstorage (xemacpsif);
 
+#ifdef __rtems__
+	SYS_ARCH_DECL_PROTECT(lev);
+	SYS_ARCH_PROTECT(lev);
+#endif /* __rtems__ */
 	freebds = XEmacPs_BdRingGetFreeCnt (rxring);
 	while (freebds > 0) {
 		freebds--;
@@ -460,11 +477,17 @@ void setup_rx_bds(xemacpsif_s *xemacpsif, XEmacPs_BdRing *rxring)
 			lwip_stats.link.memerr++;
 			lwip_stats.link.drop++;
 #endif
+#ifdef __rtems__
+			SYS_ARCH_UNPROTECT(lev);
+#endif /* __rtems__ */
 			printf("unable to alloc pbuf in recv_handler\r\n");
 			return;
 		}
 		status = XEmacPs_BdRingAlloc(rxring, 1, &rxbd);
 		if (status != XST_SUCCESS) {
+#ifdef __rtems__
+			SYS_ARCH_UNPROTECT(lev);
+#endif /* __rtems__ */
 			LWIP_DEBUGF(NETIF_DEBUG, ("setup_rx_bds: Error allocating RxBD\r\n"));
 			pbuf_free(p);
 			return;
@@ -481,6 +504,9 @@ void setup_rx_bds(xemacpsif_s *xemacpsif, XEmacPs_BdRing *rxring)
 
 			pbuf_free(p);
 			XEmacPs_BdRingUnAlloc(rxring, 1, rxbd);
+#ifdef __rtems__
+			SYS_ARCH_UNPROTECT(lev);
+#endif /* __rtems__ */
 			return;
 		}
 #ifdef ZYNQMP_USE_JUMBO
@@ -511,15 +537,11 @@ void setup_rx_bds(xemacpsif_s *xemacpsif, XEmacPs_BdRing *rxring)
 			XEmacPs_BdWrite(rxbd, XEMACPS_BD_ADDR_OFFSET, (UINTPTR)p->payload);
 		}
 
-#ifdef __rtems__
-		SYS_ARCH_DECL_PROTECT(lev);
-		SYS_ARCH_PROTECT(lev);
-#endif /* __rtems__ */
 		rx_pbufs_storage[index + bdindex] = (UINTPTR)p;
-#ifdef __rtems__
-		SYS_ARCH_UNPROTECT(lev);
-#endif /* __rtems__ */
 	}
+#ifdef __rtems__
+	SYS_ARCH_UNPROTECT(lev);
+#endif /* __rtems__ */
 }
 
 void emacps_recv_handler(void *arg)
@@ -558,24 +580,26 @@ void emacps_recv_handler(void *arg)
 
 	while(1) {
 
+#ifdef __rtems__
+		SYS_ARCH_DECL_PROTECT(lev);
+		SYS_ARCH_PROTECT(lev);
+#endif /* __rtems__ */
 		bd_processed = XEmacPs_BdRingFromHwRx(rxring, XLWIP_CONFIG_N_RX_DESC, &rxbdset);
 		if (bd_processed <= 0) {
+#ifdef __rtems__
+			SYS_ARCH_UNPROTECT(lev);
+#endif /* __rtems__ */
 			break;
 		}
 
 		for (k = 0, curbdptr=rxbdset; k < bd_processed; k++) {
 
 			bdindex = XEMACPS_BD_TO_INDEX(rxring, curbdptr);
-#ifdef __rtems__
-			SYS_ARCH_DECL_PROTECT(lev);
-			SYS_ARCH_PROTECT(lev);
-#endif /* __rtems__ */
 			p = (struct pbuf *)rx_pbufs_storage[index + bdindex];
 
 #ifdef __rtems__
 			/* Clear this since ownership is being passed elsewhere */
 			rx_pbufs_storage[index + bdindex] = 0;
-			SYS_ARCH_UNPROTECT(lev);
 
 			/*
 			 * Nulled descriptors are left flagged so the hardware
@@ -617,6 +641,9 @@ void emacps_recv_handler(void *arg)
 		}
 		/* free up the BD's */
 		XEmacPs_BdRingFree(rxring, bd_processed, rxbdset);
+#ifdef __rtems__
+		SYS_ARCH_UNPROTECT(lev);
+#endif /* __rtems__ */
 		setup_rx_bds(xemacpsif, rxring);
 	}
 #if !NO_SYS
@@ -633,6 +660,10 @@ void clean_dma_txdescs(struct xemac_s *xemac)
 	XEmacPs_BdRing *txringptr;
 	xemacpsif_s *xemacpsif = (xemacpsif_s *)(xemac->state);
 
+#ifdef __rtems__
+	SYS_ARCH_DECL_PROTECT(lev);
+	SYS_ARCH_PROTECT(lev);
+#endif /* __rtems__ */
 	txringptr = &XEmacPs_GetTxRing(&xemacpsif->emacps);
 
 	XEmacPs_BdClear(&bdtemplate);
@@ -645,6 +676,9 @@ void clean_dma_txdescs(struct xemac_s *xemac)
 			(UINTPTR) xemacpsif->tx_bdspace, BD_ALIGNMENT,
 				 XLWIP_CONFIG_N_TX_DESC);
 	XEmacPs_BdRingClone(txringptr, &bdtemplate, XEMACPS_SEND);
+#ifdef __rtems__
+	SYS_ARCH_UNPROTECT(lev);
+#endif /* __rtems__ */
 }
 
 XStatus init_dma(struct xemac_s *xemac)
@@ -718,6 +752,10 @@ XStatus init_dma(struct xemac_s *xemac)
 		return ERR_IF;
 	}
 
+#ifdef __rtems__
+	SYS_ARCH_DECL_PROTECT(lev);
+	SYS_ARCH_PROTECT(lev);
+#endif /* __rtems__ */
 	/*
 	 * Setup RxBD space.
 	 *
@@ -735,12 +773,18 @@ XStatus init_dma(struct xemac_s *xemac)
 				     XLWIP_CONFIG_N_RX_DESC);
 
 	if (status != XST_SUCCESS) {
+#ifdef __rtems__
+		SYS_ARCH_UNPROTECT(lev);
+#endif /* __rtems__ */
 		LWIP_DEBUGF(NETIF_DEBUG, ("Error setting up RxBD space\r\n"));
 		return ERR_IF;
 	}
 
 	status = XEmacPs_BdRingClone(rxringptr, &bdtemplate, XEMACPS_RECV);
 	if (status != XST_SUCCESS) {
+#ifdef __rtems__
+		SYS_ARCH_UNPROTECT(lev);
+#endif /* __rtems__ */
 		LWIP_DEBUGF(NETIF_DEBUG, ("Error initializing RxBD space\r\n"));
 		return ERR_IF;
 	}
@@ -755,12 +799,18 @@ XStatus init_dma(struct xemac_s *xemac)
 				     XLWIP_CONFIG_N_TX_DESC);
 
 	if (status != XST_SUCCESS) {
+#ifdef __rtems__
+		SYS_ARCH_UNPROTECT(lev);
+#endif /* __rtems__ */
 		return ERR_IF;
 	}
 
 	/* We reuse the bd template, as the same one will work for both rx and tx. */
 	status = XEmacPs_BdRingClone(txringptr, &bdtemplate, XEMACPS_SEND);
 	if (status != XST_SUCCESS) {
+#ifdef __rtems__
+		SYS_ARCH_UNPROTECT(lev);
+#endif /* __rtems__ */
 		return ERR_IF;
 	}
 
@@ -779,12 +829,18 @@ XStatus init_dma(struct xemac_s *xemac)
 			lwip_stats.link.drop++;
 #endif
 			printf("unable to alloc pbuf in init_dma\r\n");
+#ifdef __rtems__
+			SYS_ARCH_UNPROTECT(lev);
+#endif /* __rtems__ */
 			return ERR_IF;
 		}
 		status = XEmacPs_BdRingAlloc(rxringptr, 1, &rxbd);
 		if (status != XST_SUCCESS) {
 			LWIP_DEBUGF(NETIF_DEBUG, ("init_dma: Error allocating RxBD\r\n"));
 			pbuf_free(p);
+#ifdef __rtems__
+			SYS_ARCH_UNPROTECT(lev);
+#endif /* __rtems__ */
 			return ERR_IF;
 		}
 		/* Enqueue to HW */
@@ -793,6 +849,9 @@ XStatus init_dma(struct xemac_s *xemac)
 			LWIP_DEBUGF(NETIF_DEBUG, ("Error: committing RxBD to HW\r\n"));
 			pbuf_free(p);
 			XEmacPs_BdRingUnAlloc(rxringptr, 1, rxbd);
+#ifdef __rtems__
+			SYS_ARCH_UNPROTECT(lev);
+#endif /* __rtems__ */
 			return ERR_IF;
 		}
 
@@ -816,14 +875,7 @@ XStatus init_dma(struct xemac_s *xemac)
 #endif
 		XEmacPs_BdSetAddressRx(rxbd, (UINTPTR)p->payload);
 
-#ifdef __rtems__
-		SYS_ARCH_DECL_PROTECT(lev);
-		SYS_ARCH_PROTECT(lev);
-#endif /* __rtems__ */
 		rx_pbufs_storage[index + bdindex] = (UINTPTR)p;
-#ifdef __rtems__
-		SYS_ARCH_UNPROTECT(lev);
-#endif /* __rtems__ */
 	}
 	XEmacPs_SetQueuePtr(&(xemacpsif->emacps), xemacpsif->emacps.RxBdRing.BaseBdAddr, 0, XEMACPS_RECV);
 	if (gigeversion > 2) {
@@ -852,6 +904,9 @@ XStatus init_dma(struct xemac_s *xemac)
 		XEmacPs_Out32((xemacpsif->emacps.Config.BaseAddress + XEMACPS_TXQBASE_OFFSET),
 				   (UINTPTR)bdtxterminate);
 	}
+#ifdef __rtems__
+	SYS_ARCH_UNPROTECT(lev);
+#endif /* __rtems__ */
 #if !NO_SYS
 	xPortInstallInterruptHandler(xtopologyp->scugic_emac_intr,
 						( Xil_InterruptHandler ) XEmacPs_IntrHandler,
@@ -982,6 +1037,10 @@ void reset_dma(struct xemac_s *xemac)
 	u8 txqueuenum;
 	u32_t gigeversion;
 	xemacpsif_s *xemacpsif = (xemacpsif_s *)(xemac->state);
+#ifdef __rtems__
+	SYS_ARCH_DECL_PROTECT(lev);
+	SYS_ARCH_PROTECT(lev);
+#endif /* __rtems__ */
 	XEmacPs_BdRing *txringptr = &XEmacPs_GetTxRing(&xemacpsif->emacps);
 	XEmacPs_BdRing *rxringptr = &XEmacPs_GetRxRing(&xemacpsif->emacps);
 
@@ -997,6 +1056,9 @@ void reset_dma(struct xemac_s *xemac)
 
 	XEmacPs_SetQueuePtr(&(xemacpsif->emacps), xemacpsif->emacps.RxBdRing.BaseBdAddr, 0, XEMACPS_RECV);
 	XEmacPs_SetQueuePtr(&(xemacpsif->emacps), xemacpsif->emacps.TxBdRing.BaseBdAddr, txqueuenum, XEMACPS_SEND);
+#ifdef __rtems__
+	SYS_ARCH_UNPROTECT(lev);
+#endif /* __rtems__ */
 }
 
 void emac_disable_intr(void)

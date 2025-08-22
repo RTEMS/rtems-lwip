@@ -171,7 +171,9 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
 	struct xemac_s *xemac = (struct xemac_s *)(netif->state);
 	xemacpsif_s *xemacpsif = (xemacpsif_s *)(xemac->state);
 
+#ifndef __rtems__
 	SYS_ARCH_PROTECT(lev);
+#endif
 	/* check if space is available to send */
     freecnt = is_tx_space_available(xemacpsif);
     if (freecnt <= 5) {
@@ -179,6 +181,9 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
 		process_sent_bds(xemacpsif, txring);
 	}
 
+#ifdef __rtems__
+    SYS_ARCH_PROTECT(lev);
+#endif
     if (is_tx_space_available(xemacpsif)) {
 #if LWIP_UDP_OPT_BLOCK_TX_TILL_COMPLETE
 		if (netif_is_opt_block_tx_set(netif, NETIF_ENABLE_BLOCKING_TX_FOR_PACKET)) {
