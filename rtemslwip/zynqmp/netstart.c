@@ -56,17 +56,12 @@ int start_networking(
 
   netif_set_up( net_interface );
 
-  CPU_ZERO( &set );
-  /* Move task to CPU 0 */
-  CPU_SET( 0, &set );
-
-  sys_thread_new_affinity(
+  sys_thread_new(
     "xemacif_input_thread",
     ( void ( * )( void * ) )xemacif_input_thread,
     net_interface,
     1024,
-    DEFAULT_THREAD_PRIO,
-    &set
+    DEFAULT_THREAD_PRIO
   );
 
   return 0;
