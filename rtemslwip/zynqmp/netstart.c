@@ -36,7 +36,6 @@ int start_networking(
   unsigned char *mac_ethernet_address
 )
 {
-  cpu_set_t set;
   if (start_networking_shared()) {
     return 1;
   }
