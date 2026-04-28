@@ -2,6 +2,7 @@
 
 /*
  * Copyright (C) 2025 Prithvi Tambewagh
+ * Copyright (C) 2025 Frontgrade Gaisler AB
 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -25,59 +26,56 @@
  * POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include "greth_emac.h"
 #include <bsp.h>
 #include <greth.h>
 #include <grlib/ambapp.h>
 #include <stdio.h>
-#include "greth_emac.h"
+
+#ifdef __riscv
+#include <bsp/irq.h>
+#endif
 
 #define RDA_COUNT 32
 #define TDA_COUNT 32
 
-greth_configuration_t leon_greth_configuration;
-
-int rtems_lwip_leon3_greth_driver_attach(
-  struct greth_netif_state *greth_chip
-)
+int rtems_lwip_greth_driver_attach( struct greth_netif_state *greth_chip )
 {
-  unsigned int            base_addr = 0;
-  unsigned int            eth_irq = 0;
   struct ambapp_dev      *adev;
   struct ambapp_apb_info *apb;
+  unsigned int            dev_id = greth_chip->greth_id;
 
-  adev = (void *) ambapp_for_each(
+  adev = (void *) (uintptr_t) ambapp_for_each(
     ambapp_plb(),
     ( OPTIONS_ALL | OPTIONS_APB_SLVS ),
     VENDOR_GAISLER,
     GAISLER_ETHMAC,
     ambapp_find_by_idx,
-    NULL
+    &dev_id
   );
   if ( adev ) {
     apb = DEV_TO_APB( adev );
-    base_addr = apb->start;
-    eth_irq = apb->common.irq;
 
-    *(volatile int *) base_addr = 0;
-    *(volatile int *) base_addr = GRETH_CTRL_RST;
-    *(volatile int *) base_addr = 0;
-    leon_greth_configuration.base_address = (void *) base_addr;
-    printf(
-      "(DEBUG) GRETH Base Addr. : %p\n",
-      leon_greth_configuration.base_address
-    );
-    leon_greth_configuration.vector = eth_irq;
-    leon_greth_configuration.txd_count = TDA_COUNT;
-    leon_greth_configuration.rxd_count = RDA_COUNT;
+    greth_chip->regs = (struct greth_regs *) (uintptr_t) apb->start;
+    #ifdef __riscv
+    greth_chip->vector = RISCV_INTERRUPT_VECTOR_EXTERNAL( apb->common.irq );
+    #else
+    greth_chip->vector = apb->common.irq;
+    #endif
+
+    greth_debug_printf( "(DEBUG) GRETH Base Addr. : 0x%08x\n", apb->start );
+  } else {
+    greth_debug_printf( "GRETH device not found on AMBA bus\n" );
+    return -1;
   }
-  greth_chip->regs = leon_greth_configuration.base_address;
-  greth_chip->vec = leon_greth_configuration.vector;
-  printf( "(DEBUG) Vector Number obtained : %d\n", eth_irq );
-  printf( "(DEBUG) Vector Number set : %d\n", greth_chip->vec );
-  greth_chip->num_tx_bd = leon_greth_configuration.txd_count;
-  greth_chip->num_rx_bd = leon_greth_configuration.rxd_count;
-  greth_chip->regs->ctrl |= GRETH_CTRL_TXEN;
-  printf( "GRETH CTRL Reg. : %d\n", greth_chip->regs->ctrl );
+
+  greth_debug_printf(
+    "(DEBUG) Vector Number obtained : %d\n",
+    apb->common.irq
+  );
+  greth_debug_printf( "(DEBUG) Vector Number set : %d\n", greth_chip->vector );
+  greth_chip->regs->ctrl = GRETH_CTRL_RST;
+  greth_debug_printf( "GRETH CTRL Reg. : 0x%08x\n", greth_chip->regs->ctrl );
 
   return 0;
 }
