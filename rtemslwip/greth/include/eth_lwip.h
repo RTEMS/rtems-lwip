@@ -43,58 +43,53 @@
 #include <stdbool.h>
 #include "lwip/netif.h"
 
-
 /**
  * While scanning phy addresses no alive phy was found.
  * Return value of rpp_eth_hw_init() function.
  */
-#define NO_PHY_ALIVE             -1
+#define NO_PHY_ALIVE -1
 /**
  * Scanning default phy address, it was found it's not alive.
  * Return value of rpp_eth_hw_init() function.
  */
-#define DFLT_PHY_NOT_ALIVE       -1
+#define DFLT_PHY_NOT_ALIVE -1
 /**
  * When setting autonegotiation parameters to EMAC module, there was found 
  * impossible mode (usually on timeout of autonegotiation).
  * Return value of rpp_eth_hw_init_postInit() function.
  */
-#define UNKN_DUPLEX_MODE         -2 /* this could mean that autonegotiation was 
+#define UNKN_DUPLEX_MODE \
+  -2 /* this could mean that autonegotiation was 
                                     not completed yet */
 /**
  * Phy is down error.
  * Return value of rpp_eth_init_postInit() function.
  */
-#define PHY_LINK_DOWN            -3
+#define PHY_LINK_DOWN -3
 
 /**
  * LwIP netif couldn't be added, it is likely that there was an error during 
  * initialization of the hardware.
  */
-#define NETIF_ADD_ERR            -10 /* could be one of previous, except 
+#define NETIF_ADD_ERR \
+  -10 /* could be one of previous, except 
                                     PHY_LINK_DOWN - currently */
 /**
  * Memory requirements couldn't be satisfied.
  */
-#define DHCP_MEM_ERR             -11
+#define DHCP_MEM_ERR -11
 
 /**
  * configures whether rpp_eth_get_macAddrStr() creates string with big or 
  * small latin letters
  */
-#define MAC_BIG_LETTERS           1
+#define MAC_BIG_LETTERS 1
 
-
-int8_t eth_lwip_init(uint8_t *mac_addr);
-void eth_lwip_get_dhcp_info(void);
-int eth_lwip_get_netif_status_cmd(void);
-void eth_lwip_set_hwaddr(struct netif *netif, uint8_t *mac_addr);
-void eth_lwip_get_hwaddr_str(struct netif *netif, uint8_t *macStr);
-struct netif *eth_lwip_get_netif(uint32_t instance_number);
-
-
-
-
-
+int8_t        eth_lwip_init( uint8_t *mac_addr );
+void          eth_lwip_get_dhcp_info( void );
+int           eth_lwip_get_netif_status_cmd( void );
+void          eth_lwip_set_hwaddr( struct netif *netif, uint8_t *mac_addr );
+void          eth_lwip_get_hwaddr_str( struct netif *netif, uint8_t *macStr );
+struct netif *eth_lwip_get_netif( uint32_t instance_number );
 
 #endif /* __ETH_LWIP_H */

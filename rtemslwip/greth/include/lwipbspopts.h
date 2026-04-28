@@ -39,21 +39,22 @@
 
 #include <legacy_lwipopts.h>
 
-#define PBUF_POOL_SIZE      48434          /**< Number of pbufs in the pool */
-#define PBUF_POOL_BUFSIZE   1512           /**< Size of each pbuf buffer */
-#define PBUF_LEN_MAX        PBUF_POOL_SIZE /**< Maximum pbuf length */
+#define PBUF_POOL_SIZE    48434          /**< Number of pbufs in the pool */
+#define PBUF_POOL_BUFSIZE 1512           /**< Size of each pbuf buffer */
+#define PBUF_LEN_MAX      PBUF_POOL_SIZE /**< Maximum pbuf length */
 
-/*#define GRETH_DYN_ARP       1*/            /**< Enable dynamic ARP entries */
-#define GRETH_STATIC_ARP    1              /**< Enable static ARP entries */
+/*#define GRETH_DYN_ARP       1*/ /**< Enable dynamic ARP entries */
+#define GRETH_STATIC_ARP 1        /**< Enable static ARP entries */
 
 #if GRETH_DYN_ARP
-    #define GRETH_STATIC_ARP    0      /**< Disable static ARP */
-    #define ARP_TMR_INTERVAL    1000   /**< ARP timer interval in ms */
-    #define ARP_TABLE_SIZE      10     /**< Number of dynamic ARP table entries */
+    #define GRETH_STATIC_ARP 0    /**< Disable static ARP */
+    #define ARP_TMR_INTERVAL 1000 /**< ARP timer interval in ms */
+    #define ARP_TABLE_SIZE   10   /**< Number of dynamic ARP table entries */
 #endif
 
 #if GRETH_STATIC_ARP
-    #define GRETH_DYN_ARP                   0 /**< Disable dynamic ARP */
-    #define ETHARP_SUPPORT_STATIC_ENTRIES   1 /**< Enable LwIP support 
+    #define GRETH_DYN_ARP 0 /**< Disable dynamic ARP */
+    #define ETHARP_SUPPORT_STATIC_ENTRIES \
+  1 /**< Enable LwIP support 
                                                 for static ARP entries */
 #endif

@@ -61,7 +61,6 @@
 #define TRUE 1
 #endif
 
-
 #ifndef FALSE
 /**
  * Boolean definition for FALSE
@@ -79,8 +78,8 @@
  * @note The timeout value is derived from `GRETH_AUTONEGO_TIMEOUT_MS`.
  */
 const struct timespec greth_tan = {
-   GRETH_AUTONEGO_TIMEOUT_MS/1000,
-   (GRETH_AUTONEGO_TIMEOUT_MS % 1000) *1000000
+  GRETH_AUTONEGO_TIMEOUT_MS / 1000,
+  ( GRETH_AUTONEGO_TIMEOUT_MS % 1000 ) * 1000000
 };
 
 /**
@@ -96,17 +95,29 @@ const struct timespec greth_tan = {
  * @note This function is blocking until the PHY indicates that the reset 
  * process has completed.
  */
-void PHY_reset(struct greth_netif_state *greth_dev)
+void PHY_reset( struct greth_netif_state *greth_dev )
 {
-  greth_dev->phy_dev.phyAddr = (greth_dev->regs->mdio_ctrl >> 11) & 0x1F;
-  MDIOPhyRegRead(greth_dev, greth_dev->phy_dev.phyAddr, 0, 
-                                                  &greth_dev->phy_dev.phyCtrl);
-  while (greth_dev->phy_dev.phyCtrl & 0x8000); 
-  MDIOPhyRegWrite(greth_dev, greth_dev->phy_dev.phyAddr, 0,  
-                                          greth_dev->phy_dev.phyCtrl & 0x8000); 
-  while (greth_dev->phy_dev.phyCtrl & 0x8000); 
-  MDIOPhyRegRead(greth_dev, greth_dev->phy_dev.phyAddr, 1, 
-                                                &greth_dev->phy_dev.phyStatus);
+  greth_dev->phy_dev.phyAddr = ( greth_dev->regs->mdio_ctrl >> 11 ) & 0x1F;
+  MDIOPhyRegRead(
+    greth_dev,
+    greth_dev->phy_dev.phyAddr,
+    0,
+    &greth_dev->phy_dev.phyCtrl
+  );
+  while ( greth_dev->phy_dev.phyCtrl & 0x8000 );
+  MDIOPhyRegWrite(
+    greth_dev,
+    greth_dev->phy_dev.phyAddr,
+    0,
+    greth_dev->phy_dev.phyCtrl & 0x8000
+  );
+  while ( greth_dev->phy_dev.phyCtrl & 0x8000 );
+  MDIOPhyRegRead(
+    greth_dev,
+    greth_dev->phy_dev.phyAddr,
+    1,
+    &greth_dev->phy_dev.phyStatus
+  );
 }
 
 /**
@@ -126,26 +137,32 @@ void PHY_reset(struct greth_netif_state *greth_dev)
  *
  * @note This function is blocking until autonegotiation completes.
  */
-bool PHY_start_auto_negotiate(struct greth_netif_state *greth_dev, 
-                                                struct phy_device_info *phy_dev)
+bool PHY_start_auto_negotiate(
+  struct greth_netif_state *greth_dev,
+  struct phy_device_info   *phy_dev
+)
 {
-  PHY_reset(greth_dev);
-  MDIOPhyRegRead(greth_dev, phy_dev->phyAddr, 1, &phy_dev->phyStatus); 
-  MDIOPhyRegRead(greth_dev, phy_dev->phyAddr, 0, &phy_dev->phyCtrl);
-  if ((!greth_dev->gbit_mac) && (phy_dev->phyStatus & 0x100)){ 
-    MDIOPhyRegWrite(greth_dev, phy_dev->phyAddr, 9, 0);
+  PHY_reset( greth_dev );
+  MDIOPhyRegRead( greth_dev, phy_dev->phyAddr, 1, &phy_dev->phyStatus );
+  MDIOPhyRegRead( greth_dev, phy_dev->phyAddr, 0, &phy_dev->phyCtrl );
+  if ( ( !greth_dev->gbit_mac ) && ( phy_dev->phyStatus & 0x100 ) ) {
+    MDIOPhyRegWrite( greth_dev, phy_dev->phyAddr, 9, 0 );
   }
-  if(phy_dev->phyStatus & 0x08){ //if PHY suppport AutoNeg
-    MDIOPhyRegWrite(greth_dev, phy_dev->phyAddr, 0, (phy_dev->phyCtrl |0x1200)); 
-    MDIOPhyRegRead(greth_dev, phy_dev->phyAddr, 0, &phy_dev->phyCtrl);
+  if ( phy_dev->phyStatus & 0x08 ) { //if PHY suppport AutoNeg
+    MDIOPhyRegWrite(
+      greth_dev,
+      phy_dev->phyAddr,
+      0,
+      ( phy_dev->phyCtrl | 0x1200 )
+    );
+    MDIOPhyRegRead( greth_dev, phy_dev->phyAddr, 0, &phy_dev->phyCtrl );
   }
-  bool autoneg_done = PHY_auto_negotiate(greth_dev, &greth_dev->phy_dev);
-  if(!autoneg_done){
+  bool autoneg_done = PHY_auto_negotiate( greth_dev, &greth_dev->phy_dev );
+  if ( !autoneg_done ) {
     return FALSE;
   }
   return TRUE;
 }
-
 
 /**
  * @brief Perform PHY autonegotiation and determine link parameters.
@@ -167,71 +184,93 @@ bool PHY_start_auto_negotiate(struct greth_netif_state *greth_dev,
  *       and `auto_neg` are updated to reflect the negotiated speed, gigabit
  *       support, full-duplex mode, and autonegotiation status, respectively.
  */
-bool PHY_auto_negotiate(struct greth_netif_state *greth_dev, 
-                                                struct phy_device_info *phy_dev)
+bool PHY_auto_negotiate(
+  struct greth_netif_state *greth_dev,
+  struct phy_device_info   *phy_dev
+)
 {
-  greth_debug_printf("greth_phy.c: Autonegotiation started: check on cable if \
-                                                          it's connected!\r\n");
+  greth_debug_printf(
+    "greth_phy.c: Autonegotiation started: check on cable if \
+                                                          it's connected!\r\n"
+  );
   uint32_t tmp1;
   greth_dev->gb = greth_dev->fd = greth_dev->sp = greth_dev->auto_neg = 0;
   struct timespec tstart, tnow;
-  timespecclear(&greth_dev->auto_neg_time);
-  if ((phy_dev->phyCtrl >> 12) & 1) { 
+  timespecclear( &greth_dev->auto_neg_time );
+  if ( ( phy_dev->phyCtrl >> 12 ) & 1 ) {
     greth_dev->auto_neg = 1;
-    if (rtems_clock_get_uptime(&tstart) != RTEMS_SUCCESSFUL){
-      printk("\nrtems_clock_get_uptime failed\n");
-    }  
-    MDIOPhyRegRead(greth_dev, phy_dev->phyAddr, 1, &phy_dev->phyStatus);
-    while (!((phy_dev->phyStatus >> 5) & 1)) {
-      if (rtems_clock_get_uptime(&tnow) != RTEMS_SUCCESSFUL){
-        printk("rtems_clock_get_uptime failed\n");
-      }              
-      timespecsub(&tnow, &tstart, &greth_dev->auto_neg_time); 
-      if (timespeccmp(&greth_dev->auto_neg_time, &greth_tan, >)) {
+    if ( rtems_clock_get_uptime( &tstart ) != RTEMS_SUCCESSFUL ) {
+      printk( "\nrtems_clock_get_uptime failed\n" );
+    }
+    MDIOPhyRegRead( greth_dev, phy_dev->phyAddr, 1, &phy_dev->phyStatus );
+    while ( !( ( phy_dev->phyStatus >> 5 ) & 1 ) ) {
+      if ( rtems_clock_get_uptime( &tnow ) != RTEMS_SUCCESSFUL ) {
+        printk( "rtems_clock_get_uptime failed\n" );
+      }
+      timespecsub( &tnow, &tstart, &greth_dev->auto_neg_time );
+      if ( timespeccmp( &greth_dev->auto_neg_time, &greth_tan, > ) ) {
         greth_dev->auto_neg = -1; /* Failed */
-        MDIOPhyRegRead(greth_dev, phy_dev->phyAddr, 0, &tmp1);
-        greth_dev->gb = ((phy_dev->phyCtrl >> 6) & 1) && 
-                                                !((phy_dev->phyCtrl >> 13) & 1); 
-        greth_dev->sp = !((phy_dev->phyCtrl >> 6) & 1) && 
-                                                ((phy_dev->phyCtrl >> 13) & 1); 
-        greth_dev->fd = (phy_dev->phyCtrl >> 8) & 1;
+        MDIOPhyRegRead( greth_dev, phy_dev->phyAddr, 0, &tmp1 );
+        greth_dev->gb = ( ( phy_dev->phyCtrl >> 6 ) & 1 ) &&
+                        !( ( phy_dev->phyCtrl >> 13 ) & 1 );
+        greth_dev->sp = !( ( phy_dev->phyCtrl >> 6 ) & 1 ) &&
+                        ( ( phy_dev->phyCtrl >> 13 ) & 1 );
+        greth_dev->fd = ( phy_dev->phyCtrl >> 8 ) & 1;
         phy_dev->autoneg = FALSE;
         return FALSE;
       }
-      rtems_task_wake_after(rtems_clock_get_ticks_per_second()/32);
+      rtems_task_wake_after( rtems_clock_get_ticks_per_second() / 32 );
     }
-    MDIOPhyRegRead(greth_dev, phy_dev->phyAddr, 4, &greth_dev->phy_dev.adv);
-    
-    MDIOPhyRegRead(greth_dev, phy_dev->phyAddr, 5, &greth_dev->phy_dev.part);
-    if ((phy_dev->phyStatus >> 8) & 1) { 
-      MDIOPhyRegRead(greth_dev, phy_dev->phyAddr, 9,&greth_dev->phy_dev.extadv); 
-      MDIOPhyRegRead(greth_dev, phy_dev->phyAddr, 10, 
-                                                  &greth_dev->phy_dev.extpart);
-      if ((greth_dev->phy_dev.extadv & GRETH_MII_EXTADV_1000FD) &&
-        (greth_dev->phy_dev.extpart & GRETH_MII_EXTPRT_1000FD)){
+    MDIOPhyRegRead( greth_dev, phy_dev->phyAddr, 4, &greth_dev->phy_dev.adv );
+
+    MDIOPhyRegRead( greth_dev, phy_dev->phyAddr, 5, &greth_dev->phy_dev.part );
+    if ( ( phy_dev->phyStatus >> 8 ) & 1 ) {
+      MDIOPhyRegRead(
+        greth_dev,
+        phy_dev->phyAddr,
+        9,
+        &greth_dev->phy_dev.extadv
+      );
+      MDIOPhyRegRead(
+        greth_dev,
+        phy_dev->phyAddr,
+        10,
+        &greth_dev->phy_dev.extpart
+      );
+      if (
+        ( greth_dev->phy_dev.extadv & GRETH_MII_EXTADV_1000FD ) &&
+        ( greth_dev->phy_dev.extpart & GRETH_MII_EXTPRT_1000FD )
+      ) {
         greth_dev->gb = 1;
         greth_dev->fd = 1;
-      }
-      else if ((greth_dev->phy_dev.extadv & GRETH_MII_EXTADV_1000HD) &&
-        (greth_dev->phy_dev.extpart & GRETH_MII_EXTPRT_1000HD)){
+      } else if (
+        ( greth_dev->phy_dev.extadv & GRETH_MII_EXTADV_1000HD ) &&
+        ( greth_dev->phy_dev.extpart & GRETH_MII_EXTPRT_1000HD )
+      ) {
         greth_dev->gb = 1;
         greth_dev->fd = 0;
       }
     }
-    if ((greth_dev->gb == 0) || ((greth_dev->gb == 1) && 
-                                                  (greth_dev->gbit_mac == 0))){
-      if ((greth_dev->phy_dev.adv & GRETH_MII_100TXFD) &&
-        (greth_dev->phy_dev.part & GRETH_MII_100TXFD)) {
+    if (
+      ( greth_dev->gb == 0 ) ||
+      ( ( greth_dev->gb == 1 ) && ( greth_dev->gbit_mac == 0 ) )
+    ) {
+      if (
+        ( greth_dev->phy_dev.adv & GRETH_MII_100TXFD ) &&
+        ( greth_dev->phy_dev.part & GRETH_MII_100TXFD )
+      ) {
         greth_dev->sp = 1;
         greth_dev->fd = 1;
-      }
-      else if ((greth_dev->phy_dev.adv & GRETH_MII_100TXHD) &&
-        (greth_dev->phy_dev.part & GRETH_MII_100TXHD)) {
+      } else if (
+        ( greth_dev->phy_dev.adv & GRETH_MII_100TXHD ) &&
+        ( greth_dev->phy_dev.part & GRETH_MII_100TXHD )
+      ) {
         greth_dev->sp = 1;
         greth_dev->fd = 0;
-      }
-      else if ((greth_dev->phy_dev.adv & GRETH_MII_10FD) &&
-        (greth_dev->phy_dev.part & GRETH_MII_10FD)) {
+      } else if (
+        ( greth_dev->phy_dev.adv & GRETH_MII_10FD ) &&
+        ( greth_dev->phy_dev.part & GRETH_MII_10FD )
+      ) {
         greth_dev->fd = 1;
       }
     }
@@ -256,62 +295,68 @@ bool PHY_auto_negotiate(struct greth_netif_state *greth_dev,
  * @retval FALSE Autonegotiation was not completed, so post-configuration
  *               was not performed.
  */
-bool PHY_post_auto_negotiate(struct greth_netif_state *greth_dev, 
-                                                struct phy_device_info *phy_dev)
+bool PHY_post_auto_negotiate(
+  struct greth_netif_state *greth_dev,
+  struct phy_device_info   *phy_dev
+)
 {
-  if(phy_dev->autoneg == TRUE){
+  if ( phy_dev->autoneg == TRUE ) {
     //set PHY Manufacturing Information
     phy_dev->vendor = 0;
     phy_dev->device = 0;
     phy_dev->rev = 0;
-    MDIOPhyRegRead(greth_dev, phy_dev->phyAddr, 1, &phy_dev->phyStatus);
+    MDIOPhyRegRead( greth_dev, phy_dev->phyAddr, 1, &phy_dev->phyStatus );
 
     uint32_t tmp1, tmp2, tmp3;
 
     /*Read out PHY info if extended registers are available */
-    if (phy_dev->phyStatus & 1) {  
-      MDIOPhyRegRead(greth_dev, phy_dev->phyAddr, 2, &tmp1);
-      MDIOPhyRegRead(greth_dev, phy_dev->phyAddr, 3, &tmp2);
+    if ( phy_dev->phyStatus & 1 ) {
+      MDIOPhyRegRead( greth_dev, phy_dev->phyAddr, 2, &tmp1 );
+      MDIOPhyRegRead( greth_dev, phy_dev->phyAddr, 3, &tmp2 );
 
-      greth_dev->phy_dev.vendor = (tmp1 << 6) | ((tmp2 >> 10) & 0x3F);
+      greth_dev->phy_dev.vendor = ( tmp1 << 6 ) | ( ( tmp2 >> 10 ) & 0x3F );
       greth_dev->phy_dev.rev = tmp2 & 0xF;
-      greth_dev->phy_dev.device = (tmp2 >> 4) & 0x3F;
+      greth_dev->phy_dev.device = ( tmp2 >> 4 ) & 0x3F;
     }
 
-    if ((phy_dev->phyStatus & 1) && (phy_dev->vendor == 0x005043) && 
-                                                    (phy_dev->device == 0x0C)) {
-      if (((greth_dev->gb) && !(greth_dev->gbit_mac)) || 
-                                              !((phy_dev->phyCtrl >> 12) & 1)) { 
+    if (
+      ( phy_dev->phyStatus & 1 ) && ( phy_dev->vendor == 0x005043 ) &&
+      ( phy_dev->device == 0x0C )
+    ) {
+      if (
+        ( ( greth_dev->gb ) && !( greth_dev->gbit_mac ) ) ||
+        !( ( phy_dev->phyCtrl >> 12 ) & 1 )
+      ) {
         greth_dev->sp = greth_dev->sp << 13;
         tmp3 = 0x8000;
-        MDIOPhyRegWrite(greth_dev, phy_dev->phyAddr, 0, greth_dev->sp);
-        MDIOPhyRegWrite(greth_dev, phy_dev->phyAddr, 0, tmp3);
+        MDIOPhyRegWrite( greth_dev, phy_dev->phyAddr, 0, greth_dev->sp );
+        MDIOPhyRegWrite( greth_dev, phy_dev->phyAddr, 0, tmp3 );
         greth_dev->gb = 0;
         greth_dev->sp = 0;
         greth_dev->fd = 0;
       }
-    } 
-    else {
-      if (((greth_dev->gb) && !(greth_dev->gbit_mac))  || 
-                                              !((phy_dev->phyCtrl >> 12) & 1)) { 
+    } else {
+      if (
+        ( ( greth_dev->gb ) && !( greth_dev->gbit_mac ) ) ||
+        !( ( phy_dev->phyCtrl >> 12 ) & 1 )
+      ) {
         greth_dev->sp = greth_dev->sp << 13;
         tmp3 = 0x8000;
-        MDIOPhyRegWrite(greth_dev, phy_dev->phyAddr, 0, greth_dev->sp);
+        MDIOPhyRegWrite( greth_dev, phy_dev->phyAddr, 0, greth_dev->sp );
         greth_dev->gb = 0;
         greth_dev->sp = 0;
         greth_dev->fd = 0;
       }
     }
-    MDIOPhyRegRead(greth_dev, phy_dev->phyAddr, 0, &tmp3);
-    while (tmp3 & 0x8000); 
+    MDIOPhyRegRead( greth_dev, phy_dev->phyAddr, 0, &tmp3 );
+    while ( tmp3 & 0x8000 );
 
     greth_dev->regs->ctrl = 0;
-    greth_dev->regs->ctrl = GRETH_CTRL_RST;	
+    greth_dev->regs->ctrl = GRETH_CTRL_RST;
     greth_dev->regs->ctrl = 0;
 
     return TRUE;
-  }
-  else{
+  } else {
     return FALSE;
   }
 }

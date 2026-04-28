@@ -47,7 +47,6 @@
 #ifndef __MDIO_H__
 #define __MDIO_H__
 
-
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -56,30 +55,38 @@
 extern "C" {
 #endif
 
-int MDIOPhyRegRead(struct greth_netif_state *greth_device, uint32_t phyAddr, 
-                                  uint32_t regAddr, volatile uint32_t *dataPtr)
+int MDIOPhyRegRead(
+  struct greth_netif_state *greth_device,
+  uint32_t                  phyAddr,
+  uint32_t                  regAddr,
+  volatile uint32_t        *dataPtr
+)
 {
-  while(greth_device->regs->mdio_ctrl & GRETH_MDIO_BUSY);
-  greth_device->regs->mdio_ctrl = (phyAddr << 11) | (regAddr << 6) | 
-                                                                GRETH_MDIO_READ;
-  while(greth_device->regs->mdio_ctrl & GRETH_MDIO_BUSY);
-  if(!(greth_device->regs->mdio_ctrl & GRETH_MDIO_LINKFAIL)){
-    *dataPtr = ((greth_device->regs->mdio_ctrl >> 16) & 0xFFFF);
+  while ( greth_device->regs->mdio_ctrl & GRETH_MDIO_BUSY );
+  greth_device->regs->mdio_ctrl = ( phyAddr << 11 ) | ( regAddr << 6 ) |
+                                  GRETH_MDIO_READ;
+  while ( greth_device->regs->mdio_ctrl & GRETH_MDIO_BUSY );
+  if ( !( greth_device->regs->mdio_ctrl & GRETH_MDIO_LINKFAIL ) ) {
+    *dataPtr = ( ( greth_device->regs->mdio_ctrl >> 16 ) & 0xFFFF );
     return 1;
-  }
-  else{
-    printf("greth: failed to read\n");
+  } else {
+    printf( "greth: failed to read\n" );
     return 0;
   }
 }
 
-void MDIOPhyRegWrite(struct greth_netif_state *greth_device, uint32_t phyAddr,
-                uint32_t regAddr, uint32_t Value)
+void MDIOPhyRegWrite(
+  struct greth_netif_state *greth_device,
+  uint32_t                  phyAddr,
+  uint32_t                  regAddr,
+  uint32_t                  Value
+)
 {
-  while(greth_device->regs->mdio_ctrl & GRETH_MDIO_BUSY);   
-  greth_device->regs->mdio_ctrl = (((Value & 0xFFFF) << 16) | (phyAddr << 11) | 
-                                            (regAddr << 6) | GRETH_MDIO_WRITE);
-  while(greth_device->regs->mdio_ctrl & GRETH_MDIO_BUSY);   
+  while ( greth_device->regs->mdio_ctrl & GRETH_MDIO_BUSY );
+  greth_device->regs->mdio_ctrl =
+    ( ( ( Value & 0xFFFF ) << 16 ) | ( phyAddr << 11 ) | ( regAddr << 6 ) |
+      GRETH_MDIO_WRITE );
+  while ( greth_device->regs->mdio_ctrl & GRETH_MDIO_BUSY );
 }
 
 #ifdef __cplusplus

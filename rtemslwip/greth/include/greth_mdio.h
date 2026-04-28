@@ -37,11 +37,9 @@
 
 #include "greth_emac.h"
 
-
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
-
 
 #ifdef __cplusplus
 extern "C" {
@@ -62,8 +60,12 @@ struct greth_netif_state;
  * @retval FALSE read is not acknowledged properly.
  *
  **/
-int MDIOPhyRegRead(struct greth_netif_state *greth_device, uint32_t phyAddr, 
-                                uint32_t regAddr, volatile uint32_t *dataPtr);
+int MDIOPhyRegRead(
+  struct greth_netif_state *greth_device,
+  uint32_t                  phyAddr,
+  uint32_t                  regAddr,
+  volatile uint32_t        *dataPtr
+);
 
 /**
  * @brief   Writes a PHY register using MDIO.
@@ -76,8 +78,12 @@ int MDIOPhyRegRead(struct greth_netif_state *greth_device, uint32_t phyAddr,
  * @return  void
  *
  **/
-void MDIOPhyRegWrite(struct greth_netif_state *greth_device, uint32_t phyAddr, 
-                                            uint32_t regAddr, uint32_t Value);
+void MDIOPhyRegWrite(
+  struct greth_netif_state *greth_device,
+  uint32_t                  phyAddr,
+  uint32_t                  regAddr,
+  uint32_t                  Value
+);
 
 #ifdef __cplusplus
 }

@@ -39,24 +39,24 @@
 #ifndef __GRETH_NETIF_H
 #define __GRETH_NETIF_H
 
-#include "netif/etharp.h"       /* includes - lwip/ip.h, lwip/netif.h, 
+#include "netif/etharp.h" /* includes - lwip/ip.h, lwip/netif.h, 
                                 lwip/ip_addr.h, lwip/pbuf.h */
 
-#define GRETH_DEBUG 1 
+#define GRETH_DEBUG 1
 /*#define GRETH_GBIT_TEST 1 */
 #define GRETH_AUTONEGO_PRINT_TIME 0
 
 #if GRETH_DEBUG
-#define greth_debug_printf(...) iprintf(__VA_ARGS__)
+#define greth_debug_printf( ... ) iprintf( __VA_ARGS__ )
 #else
-#define greth_debug_printf(...) 
+#define greth_debug_printf( ... )
 #endif
 
-err_t greth_init_dev_and_lwip_netif(struct netif *netif);
+err_t                     greth_init_dev_and_lwip_netif( struct netif *netif );
 struct greth_netif_state *greth_init_state();
 
 #if GRETH_DEBUG
-void greth_debug_print_info(struct netif *netif);
+void greth_debug_print_info( struct netif *netif );
 #endif /* GRETH_NETIF_DEBUG */
 
 #endif /* __GRETH_NETIF_H */

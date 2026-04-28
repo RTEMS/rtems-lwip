@@ -40,10 +40,10 @@
 #define __ETH_LWIP_DEFAULT_H
 
 /* #define STATIC_IP_ADDRESS 1 */
-#define MAC_ADDR_LEN              ETHARP_HWADDR_LEN
+#define MAC_ADDR_LEN ETHARP_HWADDR_LEN
 
 #ifndef ETH_MAC_ADDR
-#define ETH_MAC_ADDR             { 0x12, 0x34, 0x56, 0x78, 0x9A, 0xBC }
+#define ETH_MAC_ADDR { 0x12, 0x34, 0x56, 0x78, 0x9A, 0xBC }
 #endif
 
 #if STATIC_IP_ADDRESS
@@ -53,7 +53,7 @@
  * this IP addr is used for interface.
  */
 #ifndef ETH_IP_ADDR
-#define ETH_IP_ADDR               0xC0A8F701 /* 192.168.247.1  */
+#define ETH_IP_ADDR 0xC0A8F701 /* 192.168.247.1  */
 #endif
 
 /**
@@ -61,7 +61,7 @@
  * used for interface.
  */
 #ifndef ETH_NETMASK
-#define ETH_NETMASK               0xFFFFFF00 /* 255.255.255.0  */
+#define ETH_NETMASK 0xFFFFFF00 /* 255.255.255.0  */
 #endif
 
 /**
@@ -69,7 +69,7 @@
  * used for interface.
  */
 #ifndef ETH_GW
-#define ETH_GW                    0xC0A8F7FE /* 192.168.247.254*/
+#define ETH_GW 0xC0A8F7FE /* 192.168.247.254*/
 #endif
 
 #endif /* STATIC_IP_ADDRESS */

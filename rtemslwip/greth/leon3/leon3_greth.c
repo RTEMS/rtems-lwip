@@ -26,48 +26,58 @@
 */
 
 #include <bsp.h>
-#include<greth.h>
+#include <greth.h>
 #include <grlib/ambapp.h>
 #include <stdio.h>
 #include "greth_emac.h"
 
-#define RDA_COUNT     32
-#define TDA_COUNT     32
+#define RDA_COUNT 32
+#define TDA_COUNT 32
 
 greth_configuration_t leon_greth_configuration;
 
-int rtems_lwip_leon3_greth_driver_attach(struct greth_netif_state *greth_chip)
+int rtems_lwip_leon3_greth_driver_attach(
+  struct greth_netif_state *greth_chip
+)
 {
-  unsigned int base_addr = 0; 
-  unsigned int eth_irq = 0;   
-  struct ambapp_dev *adev;
+  unsigned int            base_addr = 0;
+  unsigned int            eth_irq = 0;
+  struct ambapp_dev      *adev;
   struct ambapp_apb_info *apb;
 
-  adev = (void *)ambapp_for_each(ambapp_plb(), (OPTIONS_ALL|OPTIONS_APB_SLVS),
-                                 VENDOR_GAISLER, GAISLER_ETHMAC,
-                                 ambapp_find_by_idx, NULL);
-  if (adev) {
-    apb = DEV_TO_APB(adev);
+  adev = (void *) ambapp_for_each(
+    ambapp_plb(),
+    ( OPTIONS_ALL | OPTIONS_APB_SLVS ),
+    VENDOR_GAISLER,
+    GAISLER_ETHMAC,
+    ambapp_find_by_idx,
+    NULL
+  );
+  if ( adev ) {
+    apb = DEV_TO_APB( adev );
     base_addr = apb->start;
     eth_irq = apb->common.irq;
 
     *(volatile int *) base_addr = 0;
     *(volatile int *) base_addr = GRETH_CTRL_RST;
     *(volatile int *) base_addr = 0;
-    leon_greth_configuration.base_address = (void *)base_addr;
-    printf("(DEBUG) GRETH Base Addr. : %p\n", leon_greth_configuration.base_address);
-    leon_greth_configuration.vector = eth_irq; 
+    leon_greth_configuration.base_address = (void *) base_addr;
+    printf(
+      "(DEBUG) GRETH Base Addr. : %p\n",
+      leon_greth_configuration.base_address
+    );
+    leon_greth_configuration.vector = eth_irq;
     leon_greth_configuration.txd_count = TDA_COUNT;
     leon_greth_configuration.rxd_count = RDA_COUNT;
   }
   greth_chip->regs = leon_greth_configuration.base_address;
   greth_chip->vec = leon_greth_configuration.vector;
-  printf("(DEBUG) Vector Number obtained : %d\n", eth_irq);
-  printf("(DEBUG) Vector Number set : %d\n", greth_chip->vec);
+  printf( "(DEBUG) Vector Number obtained : %d\n", eth_irq );
+  printf( "(DEBUG) Vector Number set : %d\n", greth_chip->vec );
   greth_chip->num_tx_bd = leon_greth_configuration.txd_count;
   greth_chip->num_rx_bd = leon_greth_configuration.rxd_count;
   greth_chip->regs->ctrl |= GRETH_CTRL_TXEN;
-  printf("GRETH CTRL Reg. : %d\n", greth_chip->regs->ctrl);
+  printf( "GRETH CTRL Reg. : %d\n", greth_chip->regs->ctrl );
 
   return 0;
 }

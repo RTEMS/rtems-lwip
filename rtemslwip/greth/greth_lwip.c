@@ -63,14 +63,14 @@
 #include <inttypes.h>
 
 #ifndef MAX_EMAC_INSTANCE
-#define MAX_EMAC_INSTANCE           1
+#define MAX_EMAC_INSTANCE 1
 #endif /*MAX_EMAC_INSTANCE*/
 
 #define SUCCESS ERR_OK
 #define FAILURE ERR_IF
 
-static struct netif eth_lwip_netifs[MAX_EMAC_INSTANCE]; /* */
-static void eth_lwip_conv_IP_decimal_Str(ip_addr_t ip, uint8_t *ipStr);
+static struct netif eth_lwip_netifs[ MAX_EMAC_INSTANCE ]; /* */
+static void eth_lwip_conv_IP_decimal_Str( ip_addr_t ip, uint8_t *ipStr );
 
 /**
  * @brief Print the DHCP-assigned IP information for the default netif.
@@ -83,20 +83,20 @@ static void eth_lwip_conv_IP_decimal_Str(ip_addr_t ip, uint8_t *ipStr);
  * @param void
  * @returns void
  */
-void eth_lwip_get_dhcp_info(void)
+void eth_lwip_get_dhcp_info( void )
 {
-  struct netif *netif = eth_lwip_get_netif(0);  
+  struct netif *netif = eth_lwip_get_netif( 0 );
 
-  if (dhcp_supplied_address(netif)) { 
-    uint8_t ipString[16]; 
-    eth_lwip_conv_IP_decimal_Str(netif->ip_addr, ipString);
-    printf("Address: %s\n", ipString);
-    eth_lwip_conv_IP_decimal_Str(netif->netmask, ipString);
-    printf("Netmask: %s\n", ipString);
-    eth_lwip_conv_IP_decimal_Str(netif->gw, ipString);
-    printf("Gateway: %s\n", ipString);
+  if ( dhcp_supplied_address( netif ) ) {
+    uint8_t ipString[ 16 ];
+    eth_lwip_conv_IP_decimal_Str( netif->ip_addr, ipString );
+    printf( "Address: %s\n", ipString );
+    eth_lwip_conv_IP_decimal_Str( netif->netmask, ipString );
+    printf( "Netmask: %s\n", ipString );
+    eth_lwip_conv_IP_decimal_Str( netif->gw, ipString );
+    printf( "Gateway: %s\n", ipString );
   } else {
-    printf("dhcp not bound\n");
+    printf( "dhcp not bound\n" );
   }
 }
 
@@ -120,43 +120,53 @@ void eth_lwip_get_dhcp_info(void)
  * @retval NETIF_ADD_ERR Failed to add the network interface
  */
 int start_networking(
-  struct netif  *net_interface,
-  ip_addr_t     *ipaddr,
-  ip_addr_t     *netmask,
-  ip_addr_t     *gateway,
-  uint8_t *mac_addr
+  struct netif *net_interface,
+  ip_addr_t    *ipaddr,
+  ip_addr_t    *netmask,
+  ip_addr_t    *gateway,
+  uint8_t      *mac_addr
 )
 {
   int8_t retVal = SUCCESS;
 
-  struct netif *netif = net_interface;
-  struct netif *netif_tmp;
-  struct greth_netif_state *greth_state = 
-                                      malloc(sizeof(struct greth_netif_state));
-  u8_t default_mac[MAC_ADDR_LEN] = ETH_MAC_ADDR;
+  struct netif             *netif = net_interface;
+  struct netif             *netif_tmp;
+  struct greth_netif_state *greth_state = malloc(
+    sizeof( struct greth_netif_state )
+  );
+  u8_t default_mac[ MAC_ADDR_LEN ] = ETH_MAC_ADDR;
 
-  if (mac_addr == NULL)
+  if ( mac_addr == NULL ) {
     mac_addr = default_mac;
+  }
 
-  eth_lwip_set_hwaddr(netif, mac_addr);
-  tcpip_init(NULL, NULL);
+  eth_lwip_set_hwaddr( netif, mac_addr );
+  tcpip_init( NULL, NULL );
 
   ip4_addr_t ip_addr, net_mask, gw_addr;
-  
+
   ip_addr.addr = ipaddr->u_addr.ip4.addr;
   net_mask.addr = netmask->u_addr.ip4.addr;
   gw_addr.addr = gateway->u_addr.ip4.addr;
 
-  netif_tmp = netif_add(netif, &ip_addr, &net_mask, &gw_addr,
-                      greth_state, greth_init_dev_and_lwip_netif, tcpip_input);
+  netif_tmp = netif_add(
+    netif,
+    &ip_addr,
+    &net_mask,
+    &gw_addr,
+    greth_state,
+    greth_init_dev_and_lwip_netif,
+    tcpip_input
+  );
 
-  if (netif_tmp == NULL)
+  if ( netif_tmp == NULL ) {
     return NETIF_ADD_ERR;
+  }
 
-  netif_set_default(netif);
-  
+  netif_set_default( netif );
+
 #if LWIP_NETIF_API
-  netifapi_netif_set_up(netif);
+  netifapi_netif_set_up( netif );
 #endif
 
   return retVal;
@@ -173,7 +183,7 @@ int start_networking(
  *
  * @return int Always returns 0.
  */
-int eth_lwip_get_netif_status_cmd(void)
+int eth_lwip_get_netif_status_cmd( void )
 {
   stats_display();
   return 0;
@@ -191,12 +201,12 @@ int eth_lwip_get_netif_status_cmd(void)
  * @return struct netif* Pointer to the network interface structure.
  * @retval NULL If the instance number is out of range.
  */
-struct netif *
-eth_lwip_get_netif(uint32_t instance_number)
+struct netif *eth_lwip_get_netif( uint32_t instance_number )
 {
-  if (instance_number >= MAX_EMAC_INSTANCE)
+  if ( instance_number >= MAX_EMAC_INSTANCE ) {
     return NULL;
-  return &eth_lwip_netifs[instance_number];
+  }
+  return &eth_lwip_netifs[ instance_number ];
 }
 
 /**
@@ -212,18 +222,24 @@ eth_lwip_get_netif(uint32_t instance_number)
  *
  * @note The function currently handles only IPv4 addresses. 
  */
-static void
-eth_lwip_conv_IP_decimal_Str(ip_addr_t ip, uint8_t *ipStr)
+static void eth_lwip_conv_IP_decimal_Str( ip_addr_t ip, uint8_t *ipStr )
 {
   uint32_t addr;
  #if LWIP_IPV6
   addr = ip.u_addr.ip4.addr;
  #else
-  addr = ip.addr; 
+  addr = ip.addr;
  #endif
 
-  snprintf((char *)ipStr, 16, "%" PRIu32 ".%" PRIu32 ".%" PRIu32 ".%" PRIu32 \
-  "", (addr >> 24), ((addr >> 16) & 0xff), ((addr >> 8) & 0xff), (addr & 0xff));
+  snprintf(
+    (char *) ipStr,
+    16,
+    "%" PRIu32 ".%" PRIu32 ".%" PRIu32 ".%" PRIu32 "",
+    ( addr >> 24 ),
+    ( ( addr >> 16 ) & 0xff ),
+    ( ( addr >> 8 ) & 0xff ),
+    ( addr & 0xff )
+  );
 }
 
 /**
@@ -240,21 +256,20 @@ eth_lwip_conv_IP_decimal_Str(ip_addr_t ip, uint8_t *ipStr)
  * @note If `DEBUG` is defined, the function prints the set MAC address to
  *       the console using `eth_lwip_get_hwaddr_str()`.
  */
-void
-eth_lwip_set_hwaddr(struct netif *netif, uint8_t *mac_addr)
+void eth_lwip_set_hwaddr( struct netif *netif, uint8_t *mac_addr )
 {
   int i;
 
   /* set MAC hardware address */
-  for (i = 0; i < MAC_ADDR_LEN; i++) {
-    netif->hwaddr[i] = mac_addr[i];
+  for ( i = 0; i < MAC_ADDR_LEN; i++ ) {
+    netif->hwaddr[ i ] = mac_addr[ i ];
   }
   netif->hwaddr_len = MAC_ADDR_LEN;
 
 #ifdef DEBUG
-  uint8_t macStr[18];
-  eth_lwip_get_hwaddr_str(netif, macStr);
-  printf("Setting MAC... %s\r\n", macStr);
+  uint8_t macStr[ 18 ];
+  eth_lwip_get_hwaddr_str( netif, macStr );
+  printf( "Setting MAC... %s\r\n", macStr );
 #endif
 }
 
@@ -266,23 +281,23 @@ eth_lwip_set_hwaddr(struct netif *netif, uint8_t *mac_addr)
  * "XX:XX:XX:XX:XX:XX" using uppercase hexadecimal digits.
  *
  * @param netif    Pointer to the LwIP network interface structure.
- * @param macStr   Pointer to a buffer where the resulting string will be stored
- *                 The buffer must be at least 18 bytes to hold the full MAC 
- *                 string plus the null terminator.
+ * @param mac_string   Pointer to a buffer where the resulting string will be
+ * stored The buffer must be at least 18 bytes to hold the full MAC string plus
+ * the null terminator.
  */
-void
-eth_lwip_get_hwaddr_str(struct netif *netif, uint8_t *macStr)
+void eth_lwip_get_hwaddr_str( struct netif *netif, char *mac_string )
 {
   uint8_t index, outindex = 0;
-  char ch;
+  char    ch;
 
-  for (index = 0; index < netif->hwaddr_len; index++) {
-    if (index)
-      macStr[outindex++] = ':';
-    ch = (netif->hwaddr[index] >> 4);
-    macStr[outindex++] = (ch < 10) ? (ch + '0') : (ch - 10 + 'A');
-    ch = (netif->hwaddr[index] & 0xf);
-    macStr[outindex++] = (ch < 10) ? (ch + '0') : (ch - 10 + 'A');
+  for ( index = 0; index < netif->hwaddr_len; index++ ) {
+    if ( index ) {
+      mac_string[ outindex++ ] = ':';
+    }
+    ch = ( netif->hwaddr[ index ] >> 4 );
+    mac_string[ outindex++ ] = ( ch < 10 ) ? ( ch + '0' ) : ( ch - 10 + 'A' );
+    ch = ( netif->hwaddr[ index ] & 0xf );
+    mac_string[ outindex++ ] = ( ch < 10 ) ? ( ch + '0' ) : ( ch - 10 + 'A' );
   }
-  macStr[outindex] = 0;
+  mac_string[ outindex ] = 0;
 }
