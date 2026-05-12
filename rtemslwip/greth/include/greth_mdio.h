@@ -50,39 +50,40 @@ struct greth_netif_state;
 /**
  * @brief   Reads a PHY register using MDIO.
  *
- * @param   baseAddr      Base Address of the MDIO Module Registers.
- * @param   phyAddr       PHY Adress.
- * @param   regNum        Register Number to be read.
- * @param   dataPtr       Pointer where the read value shall be written.
+ * @param   greth_device      Base Address of the MDIO Module Registers.
+ * @param   phy_addr       PHY Address.
+ * @param   reg_addr        Register Number to be read.
+ * @param   data       Pointer where the read value shall be written.
  *
  * @return  status of the read \n
- * @retval TRUE read is successful.
- * @retval FALSE read is not acknowledged properly.
+ * @retval ERR_OK read is successful.
+ * @retval ERR_IF read is not acknowledged properly.
  *
- **/
-int MDIOPhyRegRead(
+ */
+err_t greth_phy_reg_read(
   struct greth_netif_state *greth_device,
-  uint32_t                  phyAddr,
-  uint32_t                  regAddr,
-  volatile uint32_t        *dataPtr
+  uint32_t                  phy_addr,
+  uint32_t                  reg_addr,
+  uint16_t                 *data
 );
 
 /**
  * @brief   Writes a PHY register using MDIO.
  *
- * @param   baseAddr      Base Address of the MDIO Module Registers.
- * @param   phyAddr       PHY Adress.
- * @param   regNum        Register Number to be read.
- * @param   RegVal        Value to be written.
+ * @param   greth_device      Base Address of the MDIO Module Registers.
+ * @param   phy_addr       PHY Address.
+ * @param   reg_addr        Register Number to be read.
+ * @param   value        value to be written.
  *
- * @return  void
- *
- **/
-void MDIOPhyRegWrite(
+ * @return  status of the write
+ * @retval ERR_OK write is successful.
+ * @retval ERR_IF write is not acknowledged properly.
+ */
+err_t greth_phy_reg_write(
   struct greth_netif_state *greth_device,
-  uint32_t                  phyAddr,
-  uint32_t                  regAddr,
-  uint32_t                  Value
+  uint32_t                  phy_addr,
+  uint32_t                  reg_addr,
+  uint16_t                  value
 );
 
 #ifdef __cplusplus

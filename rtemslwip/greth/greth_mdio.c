@@ -10,8 +10,8 @@
  * basic error reporting on failed reads.
  *
  * Main functionalities:
- * - Reading a PHY register using `MDIOPhyRegRead()`.
- * - Writing a PHY register using `MDIOPhyRegWrite()`.
+ * - Reading a PHY register using `greth_phy_reg_read()`.
+ * - Writing a PHY register using `greth_phy_reg_write()`.
  *
  * @ingroup GRETH
  */
@@ -43,54 +43,62 @@
 
 #include "greth_emac.h"
 #include "greth_mdio.h"
-#if 1
-#ifndef __MDIO_H__
-#define __MDIO_H__
 
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <rtems/dev/io.h>
 
-int MDIOPhyRegRead(
-  struct greth_netif_state *greth_device,
-  uint32_t                  phyAddr,
-  uint32_t                  regAddr,
-  volatile uint32_t        *dataPtr
+static inline void greth_phy_wait_for_mdio_ready(
+  struct greth_netif_state *greth_device
 )
 {
-  while ( greth_device->regs->mdio_ctrl & GRETH_MDIO_BUSY );
-  greth_device->regs->mdio_ctrl = ( phyAddr << 11 ) | ( regAddr << 6 ) |
-                                  GRETH_MDIO_READ;
-  while ( greth_device->regs->mdio_ctrl & GRETH_MDIO_BUSY );
-  if ( !( greth_device->regs->mdio_ctrl & GRETH_MDIO_LINKFAIL ) ) {
-    *dataPtr = ( ( greth_device->regs->mdio_ctrl >> 16 ) & 0xFFFF );
-    return 1;
-  } else {
-    printf( "greth: failed to read\n" );
-    return 0;
+  while ( greth_device->regs->mdio_ctrl & GRETH_MDIO_BUSY ) {
+    _IO_Relax();
   }
 }
 
-void MDIOPhyRegWrite(
+err_t greth_phy_reg_read(
   struct greth_netif_state *greth_device,
-  uint32_t                  phyAddr,
-  uint32_t                  regAddr,
-  uint32_t                  Value
+  uint32_t                  phy_addr,
+  uint32_t                  reg_addr,
+  uint16_t                 *data
 )
 {
-  while ( greth_device->regs->mdio_ctrl & GRETH_MDIO_BUSY );
-  greth_device->regs->mdio_ctrl =
-    ( ( ( Value & 0xFFFF ) << 16 ) | ( phyAddr << 11 ) | ( regAddr << 6 ) |
-      GRETH_MDIO_WRITE );
-  while ( greth_device->regs->mdio_ctrl & GRETH_MDIO_BUSY );
+  greth_phy_wait_for_mdio_ready( greth_device );
+  greth_device->regs->mdio_ctrl = ( phy_addr << GRETH_MDIO_PHYADR_BIT ) |
+                                  ( reg_addr << GRETH_MDIO_REGADR_BIT ) |
+                                  GRETH_MDIO_READ;
+  greth_phy_wait_for_mdio_ready( greth_device );
+
+  if ( greth_device->regs->mdio_ctrl & GRETH_MDIO_LINKFAIL ) {
+    return ERR_IF;
+  }
+
+  *data = ( greth_device->regs->mdio_ctrl & GRETH_MDIO_DATA ) >>
+          GRETH_MDIO_DATA_BIT;
+
+  return ERR_OK;
 }
 
-#ifdef __cplusplus
+err_t greth_phy_reg_write(
+  struct greth_netif_state *greth_device,
+  uint32_t                  phy_addr,
+  uint32_t                  reg_addr,
+  uint16_t                  value
+)
+{
+  greth_phy_wait_for_mdio_ready( greth_device );
+  greth_device->regs->mdio_ctrl =
+    ( ( value << GRETH_MDIO_DATA_BIT ) |
+      ( phy_addr << GRETH_MDIO_PHYADR_BIT ) |
+      ( reg_addr << GRETH_MDIO_REGADR_BIT ) | GRETH_MDIO_WRITE );
+  greth_phy_wait_for_mdio_ready( greth_device );
+
+  if ( greth_device->regs->mdio_ctrl & GRETH_MDIO_LINKFAIL ) {
+    return ERR_IF;
+  }
+
+  return ERR_OK;
 }
-#endif
-#endif /* __MDIO_H__ */
-#endif /* 0 */

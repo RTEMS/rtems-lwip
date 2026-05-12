@@ -13,6 +13,7 @@
 
 /*
  * Copyright (C) 2025 Prithvi Tambewagh
+ * Copyright (C) 2025 Frontgrade Gaisler AB
 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -42,21 +43,12 @@
 #include "netif/etharp.h" /* includes - lwip/ip.h, lwip/netif.h, 
                                 lwip/ip_addr.h, lwip/pbuf.h */
 
-#define GRETH_DEBUG 1
-/*#define GRETH_GBIT_TEST 1 */
-#define GRETH_AUTONEGO_PRINT_TIME 0
-
 #if GRETH_DEBUG
 #define greth_debug_printf( ... ) iprintf( __VA_ARGS__ )
 #else
 #define greth_debug_printf( ... )
 #endif
 
-err_t                     greth_init_dev_and_lwip_netif( struct netif *netif );
-struct greth_netif_state *greth_init_state();
-
-#if GRETH_DEBUG
-void greth_debug_print_info( struct netif *netif );
-#endif /* GRETH_NETIF_DEBUG */
+err_t greth_init_dev_and_lwip_netif( struct netif *netif );
 
 #endif /* __GRETH_NETIF_H */

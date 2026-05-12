@@ -89,7 +89,7 @@ int8_t        eth_lwip_init( uint8_t *mac_addr );
 void          eth_lwip_get_dhcp_info( void );
 int           eth_lwip_get_netif_status_cmd( void );
 void          eth_lwip_set_hwaddr( struct netif *netif, uint8_t *mac_addr );
-void          eth_lwip_get_hwaddr_str( struct netif *netif, uint8_t *macStr );
+void          eth_lwip_get_hwaddr_str( struct netif *netif, char *mac_string );
 struct netif *eth_lwip_get_netif( uint32_t instance_number );
 
 #endif /* __ETH_LWIP_H */

@@ -7,6 +7,7 @@
 		"rtemslwip/greth/greth_phy.c",
 		"rtemslwip/greth/greth_mdio.c",
 		"rtemslwip/greth/greth_lwip.c",
-		"rtemslwip/greth/hw_greth.c"
+		"rtemslwip/greth/hw_greth.c",
+		"rtemslwip/greth/netstart.c"
 	]
 }

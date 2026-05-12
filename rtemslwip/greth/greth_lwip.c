@@ -4,12 +4,11 @@
  * @file greth_lwip.c
  * @brief Ethernet LwIP interface functions for GRETH driver.
  *
- * This file provides the implementation of LwIP network interface
- * initialization, DHCP information retrieval, MAC address handling,
- * and IP address conversion utilities for the GRETH Ethernet driver.
+ * This file provides the implementation of LwIP DHCP information retrieval,
+ * MAC address handling, and IP address conversion utilities for the GRETH
+ * Ethernet driver.
  *
  * The main functionalities include:
- * - Starting and initializing network interfaces with static IP or DHCP.
  * - Retrieving DHCP-assigned IP address, netmask, and gateway.
  * - Displaying network interface statistics.
  * - Setting and converting MAC addresses to string format.
@@ -43,27 +42,16 @@
  * POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "lwip/tcpip.h" /* includes - lwip/opt.h, lwip/api_msg.h, 
-                        lwip/netifapi.h, lwip/pbuf.h, lwip/api.h, lwip/sys.h, 
-                        lwip/timers.h, lwip/netif.h */
 #include "lwip/stats.h"
 #include "lwip/dhcp.h"
-#include "lwip/netifapi.h"
-#include "netif/etharp.h" /* includes - lwip/ip.h, lwip/netif.h, lwip/ip_addr.h, 
-                          lwip/pbuf.h */
 #include "eth_lwip_defaults.h"
 #include "eth_lwip.h"
-
-#include <arpa/inet.h>
-
-#include "greth_netif.h"
-#include "greth_emac.h"
 
 #include <stdio.h>
 #include <inttypes.h>
 
 #ifndef MAX_EMAC_INSTANCE
-#define MAX_EMAC_INSTANCE 1
+#define MAX_EMAC_INSTANCE 4
 #endif /*MAX_EMAC_INSTANCE*/
 
 #define SUCCESS ERR_OK
@@ -98,78 +86,6 @@ void eth_lwip_get_dhcp_info( void )
   } else {
     printf( "dhcp not bound\n" );
   }
-}
-
-/**
- * @brief Initialize and start the networking interface with given parameters.
- *
- * This function sets up a network interface using LwIP. It configures the
- * MAC address, initializes the TCP/IP stack, sets IP addresses, netmask,
- * and gateway, and adds the network interface to LwIP. It also sets the
- * interface as default and brings it up.
- *
- * @param net_interface Pointer to the LwIP network interface structure.
- * @param ipaddr        Pointer to the desired IP address (ip_addr_t).
- * @param netmask       Pointer to the desired network mask (ip_addr_t).
- * @param gateway       Pointer to the desired gateway address (ip_addr_t).
- * @param mac_addr      Pointer to 6-byte MAC address. If NULL, a default
- *                      MAC address defined by `ETH_MAC_ADDR` is used.
- *
- * @return int Status code
- * @retval SUCCESS       Networking started successfully
- * @retval NETIF_ADD_ERR Failed to add the network interface
- */
-int start_networking(
-  struct netif *net_interface,
-  ip_addr_t    *ipaddr,
-  ip_addr_t    *netmask,
-  ip_addr_t    *gateway,
-  uint8_t      *mac_addr
-)
-{
-  int8_t retVal = SUCCESS;
-
-  struct netif             *netif = net_interface;
-  struct netif             *netif_tmp;
-  struct greth_netif_state *greth_state = malloc(
-    sizeof( struct greth_netif_state )
-  );
-  u8_t default_mac[ MAC_ADDR_LEN ] = ETH_MAC_ADDR;
-
-  if ( mac_addr == NULL ) {
-    mac_addr = default_mac;
-  }
-
-  eth_lwip_set_hwaddr( netif, mac_addr );
-  tcpip_init( NULL, NULL );
-
-  ip4_addr_t ip_addr, net_mask, gw_addr;
-
-  ip_addr.addr = ipaddr->u_addr.ip4.addr;
-  net_mask.addr = netmask->u_addr.ip4.addr;
-  gw_addr.addr = gateway->u_addr.ip4.addr;
-
-  netif_tmp = netif_add(
-    netif,
-    &ip_addr,
-    &net_mask,
-    &gw_addr,
-    greth_state,
-    greth_init_dev_and_lwip_netif,
-    tcpip_input
-  );
-
-  if ( netif_tmp == NULL ) {
-    return NETIF_ADD_ERR;
-  }
-
-  netif_set_default( netif );
-
-#if LWIP_NETIF_API
-  netifapi_netif_set_up( netif );
-#endif
-
-  return retVal;
 }
 
 /**

@@ -14,6 +14,7 @@
 
 /*
  * Copyright (C) 2025 Prithvi Tambewagh
+ * Copyright (C) 2025 Frontgrade Gaisler AB
 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -39,22 +40,43 @@
 
 #include <legacy_lwipopts.h>
 
-#define PBUF_POOL_SIZE    48434          /**< Number of pbufs in the pool */
-#define PBUF_POOL_BUFSIZE 1512           /**< Size of each pbuf buffer */
-#define PBUF_LEN_MAX      PBUF_POOL_SIZE /**< Maximum pbuf length */
+#ifndef PBUF_POOL_SIZE
+#define PBUF_POOL_SIZE 1600 /* Number of pbufs in the pool */
+#else
+/* 128 RX buffers, 128 TX buffers minimum */
+#if PBUF_POOL_SIZE < 256
+#error "PBUF_POOL_SIZE must be at least 256 for GRETH lwIP driver"
+#endif /* PBUF_POOL_SIZE < 256 */
+#endif /* PBUF_POOL_SIZE */
 
-/*#define GRETH_DYN_ARP       1*/ /**< Enable dynamic ARP entries */
-#define GRETH_STATIC_ARP 1        /**< Enable static ARP entries */
+#define PBUF_POOL_BUFSIZE 2048 /**< Size of each pbuf buffer */
 
-#if GRETH_DYN_ARP
-    #define GRETH_STATIC_ARP 0    /**< Disable static ARP */
-    #define ARP_TMR_INTERVAL 1000 /**< ARP timer interval in ms */
-    #define ARP_TABLE_SIZE   10   /**< Number of dynamic ARP table entries */
+#ifndef TCP_MSS
+#define TCP_MSS 1460
 #endif
 
-#if GRETH_STATIC_ARP
-    #define GRETH_DYN_ARP 0 /**< Disable dynamic ARP */
-    #define ETHARP_SUPPORT_STATIC_ENTRIES \
-  1 /**< Enable LwIP support 
-                                                for static ARP entries */
-#endif
+#ifndef TCP_WND
+#define TCP_WND 65535
+#endif /* TCP_WND */
+
+#ifndef TCP_SND_BUF
+#define TCP_SND_BUF 65535
+#endif /* TCP_SND_BUF */
+
+#ifndef LWIP_TCP_SACK_OUT
+#define LWIP_TCP_SACK_OUT 1
+#endif /* LWIP_TCP_SACK_OUT */
+
+#ifndef TCP_QUEUE_OOSEQ
+#define TCP_QUEUE_OOSEQ 1
+#endif /* TCP_QUEUE_OOSEQ */
+
+#ifndef IP_FORWARD
+#define IP_FORWARD 1
+#endif /* IP_FORWARD */
+
+#ifndef IP_FRAG
+#define IP_FRAG 1
+#endif /* IP_FRAG */
+
+#define GRETH 1
