@@ -126,12 +126,16 @@ xemac_add(struct netif *netif,
 	UINTPTR mac_baseaddr)
 {
 	int i;
+#ifdef __rtems__
+	struct netif *ret = NULL;
+#else
 
 #if !NO_SYS
 	/* Start thread to detect link periodically for Hot Plug autodetect */
 	sys_thread_new("link_detect_thread", link_detect_thread, netif,
 			THREAD_STACKSIZE, tskIDLE_PRIORITY);
 #endif
+#endif /* __rtems__ */
 
 	/* set mac address */
 	netif->hwaddr_len = 6;
@@ -142,7 +146,11 @@ xemac_add(struct netif *netif,
 		switch (find_mac_type(mac_baseaddr)) {
 			case xemac_type_xps_emaclite:
 #ifdef XLWIP_CONFIG_INCLUDE_EMACLITE
+#ifndef __rtems__
 				return netif_add(netif, ipaddr, netmask, gw,
+#else
+				ret = netif_add(netif, ipaddr, netmask, gw,
+#endif
 					(void*)mac_baseaddr,
 					xemacliteif_init,
 #if NO_SYS
@@ -151,12 +159,19 @@ xemac_add(struct netif *netif,
 					tcpip_input
 #endif
 					);
+#ifdef __rtems__
+				break;
+#endif
 #else
 				return NULL;
 #endif
 			case xemac_type_axi_ethernet:
 #ifdef XLWIP_CONFIG_INCLUDE_AXI_ETHERNET
+#ifndef __rtems__
 				return netif_add(netif, ipaddr, netmask, gw,
+#else
+				ret = netif_add(netif, ipaddr, netmask, gw,
+#endif
 					(void*)mac_baseaddr,
 					xaxiemacif_init,
 #if NO_SYS
@@ -165,6 +180,9 @@ xemac_add(struct netif *netif,
 					tcpip_input
 #endif
 					);
+#ifdef __rtems__
+				break;
+#endif
 #else
 				return NULL;
 #endif
@@ -174,7 +192,7 @@ xemac_add(struct netif *netif,
 #ifndef __rtems__
 				return netif_add(netif, ipaddr, netmask, gw,
 #else /* __rtems__ */
-				return netif_add( netif,
+				ret = netif_add( netif,
 						(const ip4_addr_t *) ipaddr,
 						(const ip4_addr_t *) netmask,
 						(const ip4_addr_t *) gw,
@@ -188,6 +206,9 @@ xemac_add(struct netif *netif,
 #endif
 
 						);
+#ifdef __rtems__
+				break;
+#endif
 #endif
 #endif
 			default:
@@ -201,6 +222,12 @@ xemac_add(struct netif *netif,
 #endif
 				return NULL;
 	}
+#ifdef __rtems__
+	/* Start thread to detect link periodically for Hot Plug autodetect */
+	sys_thread_new("link_detect_thread", link_detect_thread, netif,
+			THREAD_STACKSIZE, tskIDLE_PRIORITY);
+	return ret;
+#endif /* __rtems__ */
 }
 
 #if !NO_SYS
