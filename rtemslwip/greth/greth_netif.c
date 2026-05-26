@@ -61,6 +61,7 @@
 #include "greth_emac.h"
 #include "greth_mdio.h"
 #include "greth_netif.h"
+#include "greth_hw_cfg.h"
 #include "eth_lwip.h"
 #include "hw_greth.h"
 
@@ -379,6 +380,7 @@ err_t greth_init_dev_and_lwip_netif( struct netif *netif )
 {
   err_t                     ret;
   struct greth_netif_state *nf_state;
+  struct lwip_greth_hw_cfg *hw_cfg = netif->state;
   int                       greth_attach;
 
   nf_state = calloc( 1, sizeof( struct greth_netif_state ) );
@@ -391,8 +393,15 @@ err_t greth_init_dev_and_lwip_netif( struct netif *netif )
   }
 
   /* User provided GRETH ID */
-  if ( netif->state ) {
-    nf_state->greth_id = *(unsigned int *) netif->state;
+  if ( hw_cfg ) {
+    nf_state->greth_id = hw_cfg->greth_id;
+    nf_state->phy_dev.phyAddr = hw_cfg->phy_addr;
+  } else {
+    greth_debug_printf(
+      "[MSG] greth_init_dev_and_lwip_netif: No hardware configuration provided; using default GRETH ID and PHY address\n"
+    );
+    nf_state->greth_id = 0;
+    nf_state->phy_dev.phyAddr = 0;
   }
 
   netif->state = nf_state;

@@ -86,9 +86,11 @@ const struct timespec greth_tan = {
  */
 void greth_phy_reset( struct greth_netif_state *greth_dev )
 {
-  greth_dev->phy_dev.phyAddr = ( greth_dev->regs->mdio_ctrl &
-                                 GRETH_MDIO_PHYADR ) >>
-                               GRETH_MDIO_PHYADR_BIT;
+  if ( greth_dev->phy_dev.phyAddr == 0 ) {
+    greth_dev->phy_dev.phyAddr = ( greth_dev->regs->mdio_ctrl &
+                                   GRETH_MDIO_PHYADR ) >>
+                                 GRETH_MDIO_PHYADR_BIT;
+  }
 
   greth_phy_reg_write(
     greth_dev,
