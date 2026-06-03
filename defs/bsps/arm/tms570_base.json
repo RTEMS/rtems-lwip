@@ -1,23 +1,10 @@
 {
 	"header-paths-to-import": [
-		"rtemslwip/tms570/include",
-		"cpsw/src/include"
+		"rtemslwip/tms570/include"
 	],
 	"source-files-to-import": [
 		"rtemslwip/tms570/eth_lwip.c",
 		"rtemslwip/tms570/phy_dp83848h.c",
-		"rtemslwip/tms570/tms570_netif.c",
-		"cpsw/src/locator.c",
-		"cpsw/src/perf.c",
-		"cpsw/src/delay.c",
-		"cpsw/src/netif/cpsw_bb.c",
-		"cpsw/src/netif/cache.c",
-		"cpsw/src/netif/cpsw.c",
-		"cpsw/src/netif/cpswif.c",
-		"cpsw/src/netif/delay.c",
-		"cpsw/src/netif/phy.c",
-		"cpsw/src/netif/mdio.c",
-		"cpsw/src/netif/mmu.c",
-		"cpsw/src/lwiplib.c"
+		"rtemslwip/tms570/tms570_netif.c"
 	]
 }

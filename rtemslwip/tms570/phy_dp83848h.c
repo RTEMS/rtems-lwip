@@ -34,7 +34,6 @@
 
 #include "ti_drv_mdio.h"
 #include "phy_dp83848h.h"
-#include "mdio.h"
 
 #ifndef TRUE
 /**
