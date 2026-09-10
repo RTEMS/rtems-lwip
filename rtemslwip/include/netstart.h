@@ -30,6 +30,10 @@
 #include <lwip/sockets.h>
 #include <lwip/ip_addr.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int start_networking(
   struct netif  *net_interface,
   ip_addr_t     *ipaddr,
@@ -39,5 +43,9 @@ int start_networking(
 );
 
 rtems_status_code start_networking_shared(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
