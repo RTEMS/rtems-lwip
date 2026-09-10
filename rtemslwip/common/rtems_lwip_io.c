@@ -174,6 +174,8 @@ int socket(
   lwipfd = lwip_socket( domain, type, protocol );
 
   if ( lwipfd < 0 ) {
+    rtems_lwip_semaphore_release();
+
     return -1;
   }
 
@@ -345,6 +347,10 @@ int accept(
   }
 
   lwipfd = lwip_accept( lwipfd, name, namelen );
+
+  if ( lwipfd < 0 ) {
+    return -1;
+  }
 
   rtems_lwip_semaphore_obtain();
   ret = rtems_lwip_make_sysfd_from_lwipfd( lwipfd );
