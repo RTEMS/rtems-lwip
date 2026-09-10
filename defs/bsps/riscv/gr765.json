@@ -1,0 +1,14 @@
+{
+  "header-paths-to-import": [
+    "rtemslwip/greth2/include"
+  ],
+  "source-files-to-import": [
+    "rtemslwip/greth2/greth2_netif.c",
+    "rtemslwip/greth2/greth2_phy.c",
+    "rtemslwip/greth2/greth2_mdio.c",
+    "rtemslwip/greth2/greth2_ext_mdio.c",
+    "rtemslwip/greth2/greth2_lwip.c",
+    "rtemslwip/greth2/hw_greth2.c",
+    "rtemslwip/greth2/netstart.c"
+  ]
+}
